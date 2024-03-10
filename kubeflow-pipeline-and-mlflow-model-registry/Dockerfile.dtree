@@ -1,0 +1,11 @@
+FROM python:latest
+
+WORKDIR /app
+
+COPY dtree/requirements.txt .
+RUN pip install requirements.txt
+
+COPY *.py .
+COPY dtree/*.py .
+
+CMD [ "ls" ]

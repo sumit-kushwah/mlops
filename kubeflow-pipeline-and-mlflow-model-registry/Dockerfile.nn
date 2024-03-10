@@ -1,0 +1,11 @@
+FROM python:latest
+
+WORKDIR /app
+
+COPY nn/requirements.txt .
+RUN pip install requirements.txt
+
+COPY *.py .
+COPY nn/*.py .
+
+CMD [ "ls" ]

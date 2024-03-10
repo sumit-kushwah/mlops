@@ -1,0 +1,18 @@
+{
+  "age": 0.01,
+  "job": 0.01,
+  "martial": 0.01,
+  "education": 0.01,
+  "default": 0.01,
+  "balance": 0.01,
+  "housing": 0.01,
+  "loan": 0.01,
+  "contact": 0.01,
+  "day": 0.01,
+  "month": 0.01,
+  "duration": 0.01,
+  "campaign": 0.01,
+  "pdays": 0.01,
+  "previous": 0.01,
+  "poutcome": 0.01
+}
