@@ -67,7 +67,7 @@ rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 mlflow.set_tracking_uri(mlflow_tracking_uri)
 mlflow.set_experiment("Restaurant-Model")
 
-with mlflow.start_run(run_name="Model Evaluation") as run:
+with mlflow.start_run(run_name="Model Evaluation(NN)") as run:
     mlflow.set_tag("release.version", "1.0.0")
     mlflow.log_param("X test file path", x_test_path)
     mlflow.log_param("y test file path", y_test_path)

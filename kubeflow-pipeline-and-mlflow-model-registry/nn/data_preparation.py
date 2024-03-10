@@ -61,7 +61,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 mlflow.set_tracking_uri(mlflow_tracking_uri)
 mlflow.set_experiment("Restaurant-Model")
 
-with mlflow.start_run(run_name="Data Preparation") as run:
+with mlflow.start_run(run_name="Data Preparation(NN)") as run:
     mlflow.set_tag("release.version", "1.0.0")
     mlflow.log_param("Input file path", input_file)
     mlflow.log_param("Rows Before", df.shape[0])

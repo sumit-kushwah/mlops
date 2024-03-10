@@ -1,0 +1,48 @@
+artifact_path: model
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.11.4
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.3.0
+mlflow_version: 2.11.0
+model_size_bytes: 5089
+model_uuid: 9bb74bba68eb46eca39e17913ca7f93c
+run_id: 36cb4104e40449cf8252cad19c01a5b5
+signature:
+  inputs: '[{"type": "long", "name": "City", "required": true}, {"type": "long", "name":
+    "Restaurant Location", "required": true}, {"type": "long", "name": "Opening Day
+    of Restaurant", "required": true}, {"type": "double", "name": "Facebook Popularity
+    Quotient", "required": true}, {"type": "long", "name": "Endorsed By", "required":
+    true}, {"type": "double", "name": "Instagram Popularity Quotient", "required":
+    true}, {"type": "long", "name": "Fire Audit", "required": true}, {"type": "long",
+    "name": "Situated in a Multi Complex", "required": true}, {"type": "long", "name":
+    "Dedicated Parking", "required": true}, {"type": "long", "name": "Open Sitting
+    Available", "required": true}, {"type": "double", "name": "Resturant Tier", "required":
+    true}, {"type": "long", "name": "Restaurant Type", "required": true}, {"type":
+    "long", "name": "Restaurant Theme", "required": true}, {"type": "long", "name":
+    "Restaurant Zomato Rating", "required": true}, {"type": "long", "name": "Restaurant
+    City Tier", "required": true}, {"type": "long", "name": "Order Wait Time", "required":
+    true}, {"type": "long", "name": "Staff Responsivness", "required": true}, {"type":
+    "long", "name": "Value for Money", "required": true}, {"type": "long", "name":
+    "Hygiene Rating", "required": true}, {"type": "long", "name": "Food Rating", "required":
+    true}, {"type": "double", "name": "Overall Restaurant Rating", "required": true},
+    {"type": "double", "name": "Live Music Rating", "required": true}, {"type": "double",
+    "name": "Comedy Gigs Rating", "required": true}, {"type": "double", "name": "Value
+    Deals Rating", "required": true}, {"type": "double", "name": "Ambience", "required":
+    true}, {"type": "long", "name": "Lively", "required": true}, {"type": "long",
+    "name": "Service", "required": true}, {"type": "long", "name": "Comfortablility",
+    "required": true}, {"type": "long", "name": "Privacy", "required": true}, {"type":
+    "long", "name": "Cuisine1", "required": true}, {"type": "long", "name": "Cuisine2",
+    "required": true}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "float64", "shape": [-1]}}]'
+  params: null
+utc_time_created: '2024-03-10 19:25:44.896409'

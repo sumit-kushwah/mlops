@@ -62,12 +62,19 @@ mlflow.autolog()
 
 from sklearn.tree import DecisionTreeRegressor
 
-model = DecisionTreeRegressor(random_state=42)
+model = DecisionTreeRegressor(random_state=42, max_depth=5)
 
-model.fit(X_train, y_train)
+with mlflow.start_run(run_name="Model Training(Decision Tree)") as run:
+    model.fit(X_train, y_train)
 
-# Save the model
-model_file = os.path.join(model_path, "model.pkl")
-import joblib
+    # Save the model
+    model_file = os.path.join(model_path, "model.pkl")
+    import joblib
 
-joblib.dump(model, model_file)
+    from matplotlib import pyplot as plt
+    from sklearn import tree
+
+    tree.plot_tree(model)
+    mlflow.log_figure(plt.gcf(), "figure.png")
+
+    joblib.dump(model, model_file)

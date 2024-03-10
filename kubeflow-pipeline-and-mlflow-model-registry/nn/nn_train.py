@@ -78,14 +78,15 @@ model = Sequential(
     ]
 )
 
-# Compile the model
-model.compile(optimizer="adam", loss="mean_squared_error")
+with mlflow.start_run(run_name="Model Training(NN)") as run:
+    # Compile the model
+    model.compile(optimizer="adam", loss="mean_squared_error")
 
-# Display the model summary
-model.summary()
+    # Display the model summary
+    model.summary()
 
-# Train the model
-history = model.fit(X_train, y_train, epochs=50, batch_size=32)
+    # Train the model
+    history = model.fit(X_train, y_train, epochs=50, batch_size=32)
 
-# saving the nn model
-model.save(os.path.join(model_path, "nn_model.h5"))
+    # saving the nn model
+    model.save(os.path.join(model_path, "nn_model.h5"))
