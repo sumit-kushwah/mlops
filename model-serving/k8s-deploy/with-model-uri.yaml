@@ -1,0 +1,12 @@
+apiVersion: "serving.kserve.io/v1beta1"
+kind: "InferenceService"
+metadata:
+  name: "mlflow-restaurant-turnover-model"
+  namespace: "mlflow-kserve-test"
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: mlflow
+      protocolVersion: v2
+      storageUri: gs://banned_project/mlflow-artifacts-location/4/36cb4104e40449cf8252cad19c01a5b5/artifacts/model

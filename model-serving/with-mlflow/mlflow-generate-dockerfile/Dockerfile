@@ -3,7 +3,7 @@ FROM python:3.11.4-slim
 
 RUN apt-get -y update && apt-get install -y --no-install-recommends nginx
 
-
+RUN apt-get install -y --no-install-recommends gcc
 
 WORKDIR /opt/mlflow
 
@@ -16,7 +16,7 @@ RUN python -c "from mlflow.models import container as C; C._install_pyfunc_deps(
 
 ENV MLFLOW_DISABLE_ENV_CREATION=True
 ENV ENABLE_MLSERVER=False
-ENV GUNICORN_CMD_ARGS="--timeout 60 -k gevent"
+ENV GUNICORN_CMD_ARGS="--timeout 60 -k gevent -b 0.0.0.0:5000"
 
 # granting read/write access and conditional execution authority to all child directories
 # and files to allow for deployment to AWS Sagemaker Serverless Endpoints

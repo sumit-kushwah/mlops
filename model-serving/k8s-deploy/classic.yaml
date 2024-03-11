@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "restaurant-turnover-model"
+  labels:
+    app: "restaurant-turnover-model"
+spec:
+  containers:
+    - name: "restaurant-turnover-model"
+      image: with-mlflow-dtree:latest
+      ports:
+        - containerPort: 5000
+      imagePullPolicy: Never
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: restaurant-turnover-model-service
+spec:
+  selector:
+    app: restaurant-turnover-model
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30080
+  type: NodePort

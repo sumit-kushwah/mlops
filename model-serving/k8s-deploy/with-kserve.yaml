@@ -1,0 +1,19 @@
+apiVersion: "serving.kserve.io/v1beta1"
+kind: "InferenceService"
+metadata:
+  name: "mlflow-restaurant-turnover-model"
+  namespace: "mlflow-kserve-test"
+spec:
+  predictor:
+    containers:
+      - name: "mlflow-restaurant-turnover-model"
+        imagePullPolicy: Never
+        image: with-mlflow-dtree:1.0.0
+        ports:
+          - containerPort: 5000
+            protocol: TCP
+        env:
+          - name: PROTOCOL
+            value: "v2"
+
+# https://iximiuz.com/en/posts/kubernetes-kind-load-docker-image/
