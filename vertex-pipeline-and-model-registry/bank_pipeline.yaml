@@ -1,0 +1,437 @@
+# PIPELINE DEFINITION
+# Name: bank-model-pipeline
+# Outputs:
+#    data-validation-metrics: system.Metrics
+#    model-evaluation-metrics: system.Metrics
+components:
+  comp-condition-1:
+    dag:
+      outputs:
+        artifacts:
+          model-evaluation-metrics:
+            artifactSelectors:
+            - outputArtifactKey: metrics
+              producerSubtask: model-evaluation
+      tasks:
+        data-preparation:
+          cachingOptions:
+            enableCache: true
+          componentRef:
+            name: comp-data-preparation
+          inputs:
+            artifacts:
+              features:
+                componentInputArtifact: pipelinechannel--data-extraction-features
+              labels:
+                componentInputArtifact: pipelinechannel--data-extraction-labels
+          taskInfo:
+            name: data-preparation
+        model-evaluation:
+          cachingOptions:
+            enableCache: true
+          componentRef:
+            name: comp-model-evaluation
+          dependentTasks:
+          - data-preparation
+          - model-train
+          inputs:
+            artifacts:
+              X_test_dataset:
+                taskOutputArtifact:
+                  outputArtifactKey: X_test_dataset
+                  producerTask: data-preparation
+              model_input:
+                taskOutputArtifact:
+                  outputArtifactKey: model_output
+                  producerTask: model-train
+              y_test_dataset:
+                taskOutputArtifact:
+                  outputArtifactKey: y_test_dataset
+                  producerTask: data-preparation
+          taskInfo:
+            name: model-evaluation
+        model-train:
+          cachingOptions:
+            enableCache: true
+          componentRef:
+            name: comp-model-train
+          dependentTasks:
+          - data-preparation
+          inputs:
+            artifacts:
+              X_train_dataset:
+                taskOutputArtifact:
+                  outputArtifactKey: X_train_dataset
+                  producerTask: data-preparation
+              y_train_dataset:
+                taskOutputArtifact:
+                  outputArtifactKey: y_train_dataset
+                  producerTask: data-preparation
+          taskInfo:
+            name: model-train
+    inputDefinitions:
+      artifacts:
+        pipelinechannel--data-extraction-features:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        pipelinechannel--data-extraction-labels:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        pipelinechannel--data-validation-all_passed:
+          parameterType: BOOLEAN
+    outputDefinitions:
+      artifacts:
+        model-evaluation-metrics:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+  comp-data-extraction:
+    executorLabel: exec-data-extraction
+    outputDefinitions:
+      artifacts:
+        features:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        labels:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-data-preparation:
+    executorLabel: exec-data-preparation
+    inputDefinitions:
+      artifacts:
+        features:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        labels:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        X_test_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        X_train_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        y_test_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        y_train_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-data-validation:
+    executorLabel: exec-data-validation
+    inputDefinitions:
+      artifacts:
+        features:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        metrics:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+      parameters:
+        all_passed:
+          parameterType: BOOLEAN
+  comp-model-evaluation:
+    executorLabel: exec-model-evaluation
+    inputDefinitions:
+      artifacts:
+        X_test_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        model_input:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        y_test_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        metrics:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+  comp-model-train:
+    executorLabel: exec-model-train
+    inputDefinitions:
+      artifacts:
+        X_train_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        y_train_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        model_output:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+defaultPipelineRoot: gs://leap-vertex-ai-im/test-runs
+deploymentSpec:
+  executors:
+    exec-data-extraction:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - data_extraction
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet     --no-warn-script-location 'hopsworks'\
+          \ 'pandas' 'kfp==2.0.1' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          python3 -m kfp.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef data_extraction(features: Output[Dataset], labels: Output[Dataset]):\n\
+          \    import hopsworks\n    project = hopsworks.login(api_key_value=\"d8xtITOWVijkhAXY.w40wTIyrfsOWnspA7lJIsAKk3CQU5ethzhx5KHFEmC9tnAjRdLMXHjEEGefhHMvo\"\
+          )\n    fs = project.get_feature_store()\n    bank_fv = fs.get_feature_view(\"\
+          bank_fv\", 1)\n    features_df, labels_df = bank_fv.get_training_data(training_dataset_version=1)\n\
+          \    features_df.to_csv(features.path, index=False)\n    labels_df.to_csv(labels.path,\
+          \ index=False)\n\n"
+        image: python:3.10
+    exec-data-preparation:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - data_preparation
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet     --no-warn-script-location 'pandas'\
+          \ 'scikit-learn' 'kfp==2.0.1' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          python3 -m kfp.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef data_preparation(features: Input[Dataset], labels: Input[Dataset],X_train_dataset:Output[Dataset],\
+          \ X_test_dataset:Output[Dataset], y_train_dataset:Output[Dataset], y_test_dataset:Output[Dataset]):\n\
+          \    from sklearn.model_selection import train_test_split\n    import pandas\
+          \ as pd\n    X = pd.read_csv(features.path)\n    y = pd.read_csv(labels.path)\n\
+          \    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,\
+          \ random_state=42)\n    X_train.to_csv(X_train_dataset.path, index=False)\n\
+          \    X_test.to_csv(X_test_dataset.path, index=False)\n    y_train.to_csv(y_train_dataset.path,\
+          \ index=False)\n    y_test.to_csv(y_test_dataset.path, index=False)\n\n"
+        image: python:3.10
+    exec-data-validation:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - data_validation
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet     --no-warn-script-location 'pandas'\
+          \ 'evidently' 'kfp==2.0.1' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          python3 -m kfp.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef data_validation(features: Input[Dataset], metrics: Output[Metrics])\
+          \ -> NamedTuple('outputs', [('all_passed', bool)]):\n    from evidently.test_suite\
+          \ import TestSuite\n    from evidently.tests import TestNumberOfColumnsWithMissingValues\n\
+          \    from evidently.tests import TestNumberOfRowsWithMissingValues\n   \
+          \ from evidently.tests import TestNumberOfConstantColumns\n    from evidently.tests\
+          \ import TestNumberOfDuplicatedRows\n    from evidently.tests import TestNumberOfDuplicatedColumns\n\
+          \n    tests = TestSuite(tests=[\n        TestNumberOfColumnsWithMissingValues(),\n\
+          \        TestNumberOfRowsWithMissingValues(),\n        TestNumberOfConstantColumns(),\n\
+          \        TestNumberOfDuplicatedRows(),\n        TestNumberOfDuplicatedColumns(),\n\
+          \    ])\n\n    import pandas as pd\n    df = pd.read_csv(features.path)\n\
+          \n    tests.run(reference_data=None, current_data=df)\n    test_dict = tests.as_dict()\n\
+          \    metrics.log_metric(\"all_passed\", test_dict[\"summary\"][\"all_passed\"\
+          ])\n\n    namedTuple = NamedTuple('outputs', [('all_passed', str)])\n  \
+          \  return namedTuple(test_dict[\"summary\"][\"all_passed\"])\n\n"
+        image: python:3.10
+    exec-model-evaluation:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - model_evaluation
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet     --no-warn-script-location 'pandas'\
+          \ 'scikit-learn' 'joblib' 'kfp==2.0.1' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          python3 -m kfp.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef model_evaluation(metrics: Output[Metrics], model_input: Input[Model],\
+          \ X_test_dataset:Input[Dataset], y_test_dataset:Input[Dataset]):\n    from\
+          \ sklearn.metrics import accuracy_score\n    import pandas as pd\n    import\
+          \ joblib\n    X_test = pd.read_csv(X_test_dataset.path)\n    y_test = pd.read_csv(y_test_dataset.path)\n\
+          \    model = joblib.load(model_input.path)\n    y_pred = model.predict(X_test)\n\
+          \    accuracy = accuracy_score(y_test, y_pred)\n    metrics.log_metric(\"\
+          accuracy\", accuracy)\n\n"
+        image: python:3.10
+    exec-model-train:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - model_train
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet     --no-warn-script-location 'pandas'\
+          \ 'scikit-learn' 'joblib' 'kfp==2.0.1' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          python3 -m kfp.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef model_train(X_train_dataset:Input[Dataset], y_train_dataset:Input[Dataset],\
+          \ model_output:Output[Model]):\n    import time\n    import joblib\n   \
+          \ time_start = time.time()\n    from sklearn.tree import DecisionTreeClassifier\n\
+          \    import pandas as pd\n    X_train = pd.read_csv(X_train_dataset.path)\n\
+          \    y_train = pd.read_csv(y_train_dataset.path)\n    model = DecisionTreeClassifier(\n\
+          \        class_weight='balanced', \n        criterion='gini', \n       \
+          \ max_depth=5, \n        min_samples_leaf=2\n    )\n    model.fit(X_train,\
+          \ y_train)\n    time_end = time.time() \n    model_output.metadata[\"framework\"\
+          ] = \"Scikit-learn\"\n    model_output.metadata[\"time_to_train_in_seconds\"\
+          ] = time_end - time_start\n    joblib.dump(model, model_output.path)\n\n"
+        image: python:3.10
+pipelineInfo:
+  name: bank-model-pipeline
+root:
+  dag:
+    outputs:
+      artifacts:
+        data-validation-metrics:
+          artifactSelectors:
+          - outputArtifactKey: metrics
+            producerSubtask: data-validation
+        model-evaluation-metrics:
+          artifactSelectors:
+          - outputArtifactKey: model-evaluation-metrics
+            producerSubtask: condition-1
+    tasks:
+      condition-1:
+        componentRef:
+          name: comp-condition-1
+        dependentTasks:
+        - data-extraction
+        - data-validation
+        inputs:
+          artifacts:
+            pipelinechannel--data-extraction-features:
+              taskOutputArtifact:
+                outputArtifactKey: features
+                producerTask: data-extraction
+            pipelinechannel--data-extraction-labels:
+              taskOutputArtifact:
+                outputArtifactKey: labels
+                producerTask: data-extraction
+          parameters:
+            pipelinechannel--data-validation-all_passed:
+              taskOutputParameter:
+                outputParameterKey: all_passed
+                producerTask: data-validation
+        taskInfo:
+          name: condition-1
+        triggerPolicy:
+          condition: inputs.parameter_values['pipelinechannel--data-validation-all_passed']
+            == true
+      data-extraction:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-data-extraction
+        taskInfo:
+          name: data-extraction
+      data-validation:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-data-validation
+        dependentTasks:
+        - data-extraction
+        inputs:
+          artifacts:
+            features:
+              taskOutputArtifact:
+                outputArtifactKey: features
+                producerTask: data-extraction
+        taskInfo:
+          name: data-validation
+  outputDefinitions:
+    artifacts:
+      data-validation-metrics:
+        artifactType:
+          schemaTitle: system.Metrics
+          schemaVersion: 0.0.1
+      model-evaluation-metrics:
+        artifactType:
+          schemaTitle: system.Metrics
+          schemaVersion: 0.0.1
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.0.1
