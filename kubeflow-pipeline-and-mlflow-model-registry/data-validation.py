@@ -6,7 +6,7 @@ import mlflow
 
 parser = argparse.ArgumentParser(description="Data Validation")
 
-parser.add_argument("--input", type=str, help="Clean Input file path", required=True)
+parser.add_argument("--input", type=str, help="Clean Input folder", required=True)
 parser.add_argument(
     "--mlflow_uri",
     type=str,
@@ -16,7 +16,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-input_file = args.input
+input_file = os.path.join(args.input, "processed_data.csv")
 mlflow_tracking_uri = args.mlflow_uri
 
 if os.path.exists(input_file):

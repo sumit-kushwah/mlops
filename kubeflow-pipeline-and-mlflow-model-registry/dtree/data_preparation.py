@@ -7,7 +7,7 @@ import mlflow
 
 parser = argparse.ArgumentParser(description="Data Preparation")
 
-parser.add_argument("--input", type=str, help="Clean Input file path", required=True)
+parser.add_argument("--input", type=str, help="Clean Input folder", required=True)
 parser.add_argument(
     "--output", type=str, help="Processed Output file path", required=True
 )
@@ -20,7 +20,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-input_file = args.input
+input_file = os.path.join(args.input, "processed_data.csv")
 output_path = args.output
 mlflow_tracking_uri = args.mlflow_uri
 

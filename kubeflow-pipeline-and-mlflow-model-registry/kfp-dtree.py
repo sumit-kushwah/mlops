@@ -23,7 +23,7 @@ def data_preprocessing(
     out_data: Output[Artifact],
 ):
     return ContainerSpec(
-        image="asia-south1-docker.pkg.dev/vertex-ai-im/mlops-demo/restaurant-dtree:latest",
+        image="sumitkushwah/restaurant-dtree:latest",
         command=["python3", "data-pre-processing.py"],
         args=[
             "--mlflow_uri",
@@ -43,7 +43,7 @@ def data_validation(
     input: Input[Artifact],
 ):
     return ContainerSpec(
-        image="asia-south1-docker.pkg.dev/vertex-ai-im/mlops-demo/restaurant-dtree:latest",
+        image="sumitkushwah/restaurant-dtree:latest",
         command=["python3", "data-validation.py"],
         args=[
             "--mlflow_uri",
@@ -62,7 +62,7 @@ def data_preparation(
     output: Output[Artifact],
 ):
     return ContainerSpec(
-        image="asia-south1-docker.pkg.dev/vertex-ai-im/mlops-demo/restaurant-dtree:latest",
+        image="sumitkushwah/restaurant-dtree:latest",
         command=["python3", "data_preparation.py"],
         args=[
             "--mlflow_uri",
@@ -82,7 +82,7 @@ def model_train(
     model: Output[Model],
 ):
     return ContainerSpec(
-        image="asia-south1-docker.pkg.dev/vertex-ai-im/mlops-demo/restaurant-dtree:latest",
+        image="sumitkushwah/restaurant-dtree:latest",
         command=["python3", "nn_train.py"],
         args=[
             "--mlflow_uri",
@@ -104,14 +104,14 @@ def model_eval(
     model: Input[Model],
 ):
     return ContainerSpec(
-        image="asia-south1-docker.pkg.dev/vertex-ai-im/mlops-demo/restaurant-dtree:latest",
+        image="sumitkushwah/restaurant-dtree:latest",
         command=["python3", "model_evaluation.py"],
         args=[
             "--mlflow_uri",
             mlflow_uri,
-            "--x-train-path",
+            "--x-test-path",
             input.path,
-            "--y-train-path",
+            "--y-test-path",
             input.path,
             "--model-file-path",
             model.path,
@@ -119,18 +119,15 @@ def model_eval(
     )
 
 
-BUCKET_URI = "gs://vertex-ai-im"
-PIPELINE_ROOT = "{}/pipeline-runs".format(BUCKET_URI)
+# BUCKET_URI = "gs://vertex-ai-im"
+# PIPELINE_ROOT = "{}/pipeline-runs".format(BUCKET_URI)
 
 
-@pipeline(
-    name="restaurant-model-pipeline",
-    pipeline_root=PIPELINE_ROOT,
-)
+@pipeline(name="restaurant-model-pipeline")
 def restaurant_pipeline(
-    input_file: str, mlflow_uri: str = "http://35.244.48.239:8000/"
+    input_file: str = "/data/raw-data-restaurant.csv",
+    mlflow_uri: str = "http://68.183.90.6:32699/",
 ):
-    # data_extraction_task = data_extraction()
     data_preprocessing_task = data_preprocessing(
         mlflow_uri=mlflow_uri,
         input_file=input_file,
@@ -148,7 +145,7 @@ def restaurant_pipeline(
         mlflow_uri=mlflow_uri,
         input=data_preparation_task.outputs["output"],
     )
-    model_eval_task = model_eval(
+    model_eval(
         mlflow_uri=mlflow_uri,
         input=data_preparation_task.outputs["output"],
         model=model_train_task.outputs["model"],

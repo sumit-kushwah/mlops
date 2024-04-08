@@ -7,8 +7,8 @@ import mlflow
 
 parser = argparse.ArgumentParser(description="Model Training")
 
-parser.add_argument("--x-train-path", type=str, help="X train path file", required=True)
-parser.add_argument("--y-train-path", type=str, help="y train path file", required=True)
+parser.add_argument("--x-train-path", type=str, help="X train folder", required=True)
+parser.add_argument("--y-train-path", type=str, help="y train folder", required=True)
 parser.add_argument("--model-out-dir", type=str, help="Model Directory", required=True)
 parser.add_argument(
     "--mlflow_uri",
@@ -19,8 +19,8 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-x_train_path = args.x_train_path
-y_train_path = args.y_train_path
+x_train_path = os.path.join(args.x_train_path, "X_train.csv")
+y_train_path = os.path.join(args.y_train_path, "y_train.csv")
 model_path = args.model_out_dir
 mlflow_tracking_uri = args.mlflow_uri
 

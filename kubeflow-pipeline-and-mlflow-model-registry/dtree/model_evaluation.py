@@ -22,9 +22,9 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-x_test_path = args.x_test_path
-y_test_path = args.y_test_path
-model_file_path = args.model_file_path
+x_test_path = os.path.join(args.x_test_path, "X_test.csv")
+y_test_path = os.path.join(args.y_test_path, "y_test.csv")
+model_file_path = os.path.join(args.model_file_path, "model.pkl")
 mlflow_tracking_uri = args.mlflow_uri
 
 if os.path.exists(x_test_path):
