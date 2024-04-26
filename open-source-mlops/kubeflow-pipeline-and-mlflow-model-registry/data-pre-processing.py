@@ -17,6 +17,11 @@ parser.add_argument(
     help="MLFlow Tracking URI",
     default="http://localhost:8080",
 )
+parser.add_argument(
+    "--mlflow_exp",
+    type=str,
+    help="MLFlow Experiment Name",
+)
 
 args = parser.parse_args()
 
@@ -26,6 +31,7 @@ print(f"Data Pre-Processing: {args.input} -> {args.output}")
 input_file = args.input
 output_path = args.output
 mlflow_tracking_uri = args.mlflow_uri
+experiment_name = args.mlflow_exp
 
 # basic checks
 if os.path.exists(input_file):
@@ -47,7 +53,7 @@ output_file = os.path.abspath(output_path)
 df = pd.read_csv(input_file)
 
 mlflow.set_tracking_uri(mlflow_tracking_uri)
-mlflow.set_experiment("Restaurant-Model")
+mlflow.set_experiment(experiment_name)
 
 with mlflow.start_run(run_name="Data Preprocessing", nested=True) as run:
     mlflow.set_tag("release.version", "1.0.0")

@@ -1,0 +1,82 @@
+# PIPELINE DEFINITION
+# Name: hello-pipeline
+# Inputs:
+#    mlflow_uri: str [Default: 'http://35.244.48.239:8000/']
+# Outputs:
+#    Output: str
+components:
+  comp-say-hello:
+    executorLabel: exec-say-hello
+    inputDefinitions:
+      parameters:
+        mlflow_uri:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-say-hello:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - say_hello
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet     --no-warn-script-location 'mlflow'\
+          \ 'google-cloud-storage' 'kfp==2.0.1' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          python3 -m kfp.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef say_hello(mlflow_uri: str) -> str:\n    import mlflow\n    mlflow.set_tracking_uri(mlflow_uri)\n\
+          \    mlflow.set_experiment('test2')\n    run_id = \"\"\n    with mlflow.start_run(run_name=\"\
+          test run\") as parent_run:\n        mlflow.log_param(\"run_id\", parent_run.info.run_id)\n\
+          \        run_id = parent_run.info.run_id\n\n    return run_id\n\n"
+        image: python:3.10
+pipelineInfo:
+  name: hello-pipeline
+root:
+  dag:
+    outputs:
+      parameters:
+        Output:
+          valueFromParameter:
+            outputParameterKey: Output
+            producerSubtask: say-hello
+    tasks:
+      say-hello:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-say-hello
+        inputs:
+          parameters:
+            mlflow_uri:
+              componentInputParameter: mlflow_uri
+        taskInfo:
+          name: say-hello
+  inputDefinitions:
+    parameters:
+      mlflow_uri:
+        defaultValue: http://35.244.48.239:8000/
+        isOptional: true
+        parameterType: STRING
+  outputDefinitions:
+    parameters:
+      Output:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.0.1

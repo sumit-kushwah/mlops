@@ -19,6 +19,7 @@ from kfp import compiler
 @container_component
 def data_preprocessing(
     mlflow_uri: str,
+    mlflow_exp: str,
     input_file: str,
     out_data: Output[Artifact],
 ):
@@ -28,6 +29,8 @@ def data_preprocessing(
         args=[
             "--mlflow_uri",
             mlflow_uri,
+            "--mlflow_exp",
+            mlflow_exp,
             "--input",
             input_file,
             "--output",
@@ -39,6 +42,7 @@ def data_preprocessing(
 @container_component
 def data_validation(
     mlflow_uri: str,
+    mlflow_exp: str,
     output: Output[Metrics],
     input: Input[Artifact],
 ):
@@ -48,6 +52,8 @@ def data_validation(
         args=[
             "--mlflow_uri",
             mlflow_uri,
+            "--mlflow_exp",
+            mlflow_exp,
             "--input",
             input.path,
         ],
@@ -57,6 +63,7 @@ def data_validation(
 @container_component
 def data_preparation(
     mlflow_uri: str,
+    mlflow_exp: str,
     not_used: Input[Metrics],
     input: Input[Artifact],
     output: Output[Artifact],
@@ -67,6 +74,8 @@ def data_preparation(
         args=[
             "--mlflow_uri",
             mlflow_uri,
+            "--mlflow_exp",
+            mlflow_exp,
             "--input",
             input.path,
             "--output",
@@ -78,6 +87,7 @@ def data_preparation(
 @container_component
 def model_train(
     mlflow_uri: str,
+    mlflow_exp: str,
     input: Input[Artifact],
     model: Output[Model],
 ):
@@ -87,6 +97,8 @@ def model_train(
         args=[
             "--mlflow_uri",
             mlflow_uri,
+            "--mlflow_exp",
+            mlflow_exp,
             "--x-train-path",
             input.path,
             "--y-train-path",
@@ -100,6 +112,7 @@ def model_train(
 @container_component
 def model_eval(
     mlflow_uri: str,
+    mlflow_exp: str,
     input: Input[Artifact],
     model: Input[Model],
 ):
@@ -109,6 +122,8 @@ def model_eval(
         args=[
             "--mlflow_uri",
             mlflow_uri,
+            "--mlflow_exp",
+            mlflow_exp,
             "--x-test-path",
             input.path,
             "--y-test-path",
@@ -127,26 +142,32 @@ def model_eval(
 def restaurant_pipeline(
     input_file: str = "/data/raw-data-restaurant.csv",
     mlflow_uri: str = "http://68.183.90.6:32699/",
+    experiment_name: str = "Restaurant-Turnover",
 ):
     data_preprocessing_task = data_preprocessing(
         mlflow_uri=mlflow_uri,
+        mlflow_exp=experiment_name,
         input_file=input_file,
     )
     data_validation_task = data_validation(
         mlflow_uri=mlflow_uri,
+        mlflow_exp=experiment_name,
         input=data_preprocessing_task.outputs["out_data"],
     )
     data_preparation_task = data_preparation(
         mlflow_uri=mlflow_uri,
+        mlflow_exp=experiment_name,
         not_used=data_validation_task.outputs["output"],
         input=data_preprocessing_task.outputs["out_data"],
     )
     model_train_task = model_train(
         mlflow_uri=mlflow_uri,
+        mlflow_exp=experiment_name,
         input=data_preparation_task.outputs["output"],
     )
     model_eval(
         mlflow_uri=mlflow_uri,
+        mlflow_exp=experiment_name,
         input=data_preparation_task.outputs["output"],
         model=model_train_task.outputs["model"],
     )

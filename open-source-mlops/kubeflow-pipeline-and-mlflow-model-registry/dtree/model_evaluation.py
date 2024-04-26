@@ -20,12 +20,19 @@ parser.add_argument(
     default="http://localhost:8080",
 )
 
+parser.add_argument(
+    "--mlflow_exp",
+    type=str,
+    help="MLFlow Experiment Name",
+)
+
 args = parser.parse_args()
 
 x_test_path = os.path.join(args.x_test_path, "X_test.csv")
 y_test_path = os.path.join(args.y_test_path, "y_test.csv")
 model_file_path = os.path.join(args.model_file_path, "model.pkl")
 mlflow_tracking_uri = args.mlflow_uri
+experiment_name = args.mlflow_exp
 
 if os.path.exists(x_test_path):
     print(f"x train path found: {x_test_path}")
@@ -65,7 +72,7 @@ rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
 # MLFlow tracking setup
 mlflow.set_tracking_uri(mlflow_tracking_uri)
-mlflow.set_experiment("Restaurant-Model")
+mlflow.set_experiment(experiment_name)
 
 with mlflow.start_run(run_name="Model Evaluation") as run:
     mlflow.set_tag("release.version", "1.0.0")

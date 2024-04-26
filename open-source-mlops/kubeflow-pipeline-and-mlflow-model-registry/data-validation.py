@@ -14,10 +14,18 @@ parser.add_argument(
     default="http://localhost:8080",
 )
 
+parser.add_argument(
+    "--mlflow_exp",
+    type=str,
+    help="MLFlow Experiment Name",
+)
+
+
 args = parser.parse_args()
 
 input_file = os.path.join(args.input, "processed_data.csv")
 mlflow_tracking_uri = args.mlflow_uri
+experiment_name = args.mlflow_exp
 
 if os.path.exists(input_file):
     print(f"Input file found: {input_file}")
@@ -29,7 +37,7 @@ else:
 df = pd.read_csv(input_file)
 
 mlflow.set_tracking_uri(mlflow_tracking_uri)
-mlflow.set_experiment("Restaurant-Model")
+mlflow.set_experiment(experiment_name)
 
 with mlflow.start_run(run_name="Data Validation") as run:
     mlflow.set_tag("release.version", "1.0.0")

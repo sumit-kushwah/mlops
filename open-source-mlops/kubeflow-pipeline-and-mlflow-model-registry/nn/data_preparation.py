@@ -1,3 +1,4 @@
+from sklearn.preprocessing import StandardScaler
 import argparse
 import os
 import sys
@@ -18,11 +19,18 @@ parser.add_argument(
     default="http://localhost:8080",
 )
 
+parser.add_argument(
+    "--mlflow_exp",
+    type=str,
+    help="MLFlow Experiment Name",
+)
+
 args = parser.parse_args()
 
 input_file = os.path.join(args.input, "processed_data.csv")
 output_path = args.output
 mlflow_tracking_uri = args.mlflow_uri
+experiment_name = args.mlflow_exp
 
 if os.path.exists(input_file):
     print(f"Input file found: {input_file}")
@@ -47,14 +55,20 @@ df = pd.read_csv(input_file)
 X = df.drop("Annual Turnover", axis=1)
 y = df["Annual Turnover"]
 
+scaler = StandardScaler()
+
+X_scaled = pd.DataFrame(
+    {col: scaler.fit_transform(X[[col]])[:, 0] for col in X.columns}
+)
+
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+    X_scaled, y, test_size=0.2, random_state=42
 )
 
 mlflow.set_tracking_uri(mlflow_tracking_uri)
-mlflow.set_experiment("Restaurant-Model")
+mlflow.set_experiment(experiment_name)
 
-with mlflow.start_run(run_name="Data Preparation") as run:
+with mlflow.start_run(run_name="Data Preparation(NN)") as run:
     mlflow.set_tag("release.version", "1.0.0")
     mlflow.log_param("Input file path", input_file)
     mlflow.log_param("Rows Before", df.shape[0])

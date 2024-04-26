@@ -1,6 +1,7 @@
 # PIPELINE DEFINITION
 # Name: restaurant-model-pipeline
 # Inputs:
+#    experiment_name: str [Default: 'Restaurant-Turnover']
 #    input_file: str [Default: '/data/raw-data-restaurant.csv']
 #    mlflow_uri: str [Default: 'http://68.183.90.6:32699/']
 # Outputs:
@@ -19,6 +20,8 @@ components:
             schemaTitle: system.Metrics
             schemaVersion: 0.0.1
       parameters:
+        mlflow_exp:
+          parameterType: STRING
         mlflow_uri:
           parameterType: STRING
     outputDefinitions:
@@ -32,6 +35,8 @@ components:
     inputDefinitions:
       parameters:
         input_file:
+          parameterType: STRING
+        mlflow_exp:
           parameterType: STRING
         mlflow_uri:
           parameterType: STRING
@@ -50,6 +55,8 @@ components:
             schemaTitle: system.Artifact
             schemaVersion: 0.0.1
       parameters:
+        mlflow_exp:
+          parameterType: STRING
         mlflow_uri:
           parameterType: STRING
     outputDefinitions:
@@ -71,6 +78,8 @@ components:
             schemaTitle: system.Model
             schemaVersion: 0.0.1
       parameters:
+        mlflow_exp:
+          parameterType: STRING
         mlflow_uri:
           parameterType: STRING
   comp-model-train:
@@ -82,6 +91,8 @@ components:
             schemaTitle: system.Artifact
             schemaVersion: 0.0.1
       parameters:
+        mlflow_exp:
+          parameterType: STRING
         mlflow_uri:
           parameterType: STRING
     outputDefinitions:
@@ -97,6 +108,8 @@ deploymentSpec:
         args:
         - --mlflow_uri
         - '{{$.inputs.parameters[''mlflow_uri'']}}'
+        - --mlflow_exp
+        - '{{$.inputs.parameters[''mlflow_exp'']}}'
         - --input
         - '{{$.inputs.artifacts[''input''].path}}'
         - --output
@@ -110,6 +123,8 @@ deploymentSpec:
         args:
         - --mlflow_uri
         - '{{$.inputs.parameters[''mlflow_uri'']}}'
+        - --mlflow_exp
+        - '{{$.inputs.parameters[''mlflow_exp'']}}'
         - --input
         - '{{$.inputs.parameters[''input_file'']}}'
         - --output
@@ -123,6 +138,8 @@ deploymentSpec:
         args:
         - --mlflow_uri
         - '{{$.inputs.parameters[''mlflow_uri'']}}'
+        - --mlflow_exp
+        - '{{$.inputs.parameters[''mlflow_exp'']}}'
         - --input
         - '{{$.inputs.artifacts[''input''].path}}'
         command:
@@ -134,6 +151,8 @@ deploymentSpec:
         args:
         - --mlflow_uri
         - '{{$.inputs.parameters[''mlflow_uri'']}}'
+        - --mlflow_exp
+        - '{{$.inputs.parameters[''mlflow_exp'']}}'
         - --x-test-path
         - '{{$.inputs.artifacts[''input''].path}}'
         - --y-test-path
@@ -149,6 +168,8 @@ deploymentSpec:
         args:
         - --mlflow_uri
         - '{{$.inputs.parameters[''mlflow_uri'']}}'
+        - --mlflow_exp
+        - '{{$.inputs.parameters[''mlflow_exp'']}}'
         - --x-train-path
         - '{{$.inputs.artifacts[''input''].path}}'
         - --y-train-path
@@ -189,6 +210,8 @@ root:
                 outputArtifactKey: output
                 producerTask: data-validation
           parameters:
+            mlflow_exp:
+              componentInputParameter: experiment_name
             mlflow_uri:
               componentInputParameter: mlflow_uri
         taskInfo:
@@ -202,6 +225,8 @@ root:
           parameters:
             input_file:
               componentInputParameter: input_file
+            mlflow_exp:
+              componentInputParameter: experiment_name
             mlflow_uri:
               componentInputParameter: mlflow_uri
         taskInfo:
@@ -220,6 +245,8 @@ root:
                 outputArtifactKey: out_data
                 producerTask: data-preprocessing
           parameters:
+            mlflow_exp:
+              componentInputParameter: experiment_name
             mlflow_uri:
               componentInputParameter: mlflow_uri
         taskInfo:
@@ -243,6 +270,8 @@ root:
                 outputArtifactKey: model
                 producerTask: model-train
           parameters:
+            mlflow_exp:
+              componentInputParameter: experiment_name
             mlflow_uri:
               componentInputParameter: mlflow_uri
         taskInfo:
@@ -261,12 +290,18 @@ root:
                 outputArtifactKey: output
                 producerTask: data-preparation
           parameters:
+            mlflow_exp:
+              componentInputParameter: experiment_name
             mlflow_uri:
               componentInputParameter: mlflow_uri
         taskInfo:
           name: model-train
   inputDefinitions:
     parameters:
+      experiment_name:
+        defaultValue: Restaurant-Turnover
+        isOptional: true
+        parameterType: STRING
       input_file:
         defaultValue: /data/raw-data-restaurant.csv
         isOptional: true
